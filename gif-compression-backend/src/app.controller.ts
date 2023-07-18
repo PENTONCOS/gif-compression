@@ -2,44 +2,47 @@ import { BadRequestException, Body, Controller, Get, ParseIntPipe, Post, Query, 
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { existsSync } from 'fs';
-import sharp from 'sharp';
+// import sharp from 'sharp';
+
 import { AppService } from './app.service';
+
+const sharp = require('sharp');
+
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: AppService) { }
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file', {
-      dest: 'uploads'
+    dest: 'uploads'
   }))
   uploadFile(@UploadedFile() file: Express.Multer.File) {
-      console.log('file', file);
-      return file.path;
+    console.log('file', file);
+    return file.path;
   }
 
   @Get('compression')
   async compression(
     @Query('path') filePath: string,
-    @Query('color', ParseIntPipe) color:number,
+    @Query('color', ParseIntPipe) color: number,
     @Query('level', ParseIntPipe) level: number,
     @Res() res: Response
   ) {
-    
-    if(!existsSync(filePath)) {
+
+    if (!existsSync(filePath)) {
       throw new BadRequestException('文件不存在');
     }
 
-    const sharp = require('sharp');
 
     const data = await sharp(filePath, {
-        animated: true,
-        limitInputPixels: false
+      animated: true,
+      limitInputPixels: false
     }).gif({
-        compressionLevel: level,
-        colours: color
+      compressionLevel: level,
+      colours: color
     }).toBuffer();
-    
+
     res.set('Content-Disposition', `attachment; filename="dest.gif"`);
 
     res.send(data);
